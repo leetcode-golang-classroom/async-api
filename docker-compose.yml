@@ -6,9 +6,26 @@ services:
     volumes:
       - ${HOST_DIR}:/var/lib/postgresql/data
     expose:
-      - 5432
+      - ${POSTGRES_PORT}
     ports:
       - ${POSTGRES_PORT}:5432
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1k"
+        max-file: "3"
+  test_postgres:
+    restart: always
+    image: postgres:16
+    container_name: test-postgres-docker-instance-for-async-api
+    expose:
+      - ${POSTGRES_PORT_TEST}
+    ports:
+      - ${POSTGRES_PORT_TEST}:5432
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
