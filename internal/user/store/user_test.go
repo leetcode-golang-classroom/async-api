@@ -17,6 +17,7 @@ import (
 )
 
 func SetupDB(t *testing.T) (*sql.DB, *migrate.Migrate) {
+	t.Helper()
 	appConfig := config.AppConfig
 	appConfig.SetupEnv(config.Env_Dev)
 	dbURL := appConfig.DBURLTEST
