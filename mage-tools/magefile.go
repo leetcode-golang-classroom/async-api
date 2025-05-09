@@ -24,44 +24,17 @@ func Update() error {
 func Build() error {
 	mg.Deps(Clean)
 	mg.Deps(Update)
-	// build the websocket server
-	err := sh.Run("go", "build", "-o", "./bin/server", "./cmd/server/main.go")
-	if err != nil {
-		return err
-	}
-	// build the websocket client
-	err = sh.Run("go", "build", "-o", "./bin/client", "./cmd/client/main.go")
-	if err != nil {
-		return err
-	}
-	return nil
+	// build the http server
+	return sh.Run("go", "build", "-o", "./bin/server", "./cmd/main.go")
 }
 
 // LaunchServer start the server
 func LaunchServer() error {
 	mg.Deps(Build)
-	err := sh.RunV("./bin/server")
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// LaunchClient start the client
-func LaunchClient() error {
-	mg.Deps(Build)
-	err := sh.RunV("./bin/client")
-	if err != nil {
-		return err
-	}
-	return nil
+	return sh.RunV("./bin/server")
 }
 
 // run the test
 func Test() error {
-	err := sh.RunV("go", "test", "-v", "./...")
-	if err != nil {
-		return err
-	}
-	return nil
+	return sh.RunV("go", "test", "-v", "./...")
 }
