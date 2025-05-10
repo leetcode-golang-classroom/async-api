@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/leetcode-golang-classroom/golang-async-api/internal/config"
-	"github.com/leetcode-golang-classroom/golang-async-api/internal/logger"
-	"github.com/leetcode-golang-classroom/golang-async-api/internal/util"
+	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/config"
+	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/logger"
+	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/util"
 )
 
 // App - for server dependency

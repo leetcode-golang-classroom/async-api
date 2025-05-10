@@ -3,7 +3,7 @@ package application
 import (
 	"context"
 
-	"github.com/leetcode-golang-classroom/golang-async-api/internal/logger"
+	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/logger"
 )
 
 func (app *App) SetupRoute(ctx context.Context) {

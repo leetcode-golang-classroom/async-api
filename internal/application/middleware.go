@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/leetcode-golang-classroom/golang-async-api/internal/logger"
+	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/logger"
 )
 
 func NewLoggerMiddleware(ctx context.Context) func(next http.Handler) http.Handler {

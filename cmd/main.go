@@ -8,8 +8,8 @@ import (
 	"syscall"
 
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/application"
-	"github.com/leetcode-golang-classroom/golang-async-api/internal/config"
-	mlog "github.com/leetcode-golang-classroom/golang-async-api/internal/logger"
+	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/config"
+	mlog "github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/logger"
 )
 
 func main() {
