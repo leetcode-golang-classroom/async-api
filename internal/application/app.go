@@ -27,9 +27,10 @@ func New(ctx context.Context, config *config.Config) *App {
 }
 
 func (app *App) Start(ctx context.Context) error {
+	middleware := NewLoggerMiddleware(ctx)
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%s", app.config.Port),
-		Handler: app.router,
+		Handler: middleware(app.router),
 	}
 	log := logger.FromContext(ctx)
 	log.Info(fmt.Sprintf("starting server on %s", app.config.Port))
