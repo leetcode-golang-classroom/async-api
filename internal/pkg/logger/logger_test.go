@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/leetcode-golang-classroom/golang-async-api/internal/logger"
+	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/logger"
 )
 
 func Test_CtxWithLogger(t *testing.T) {

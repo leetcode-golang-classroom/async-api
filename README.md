@@ -53,3 +53,72 @@ tasks:
     ## action should be up or down
 ```
 
+## setup custom handler response with wrapper function
+
+```golang
+// Handler - handler that will handle error message
+func Handler(fn func(w http.ResponseWriter, r *http.Request) error) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// handle error message
+		if err := fn(w, r); err != nil {
+			status := http.StatusInternalServerError
+			msg := http.StatusText(status)
+			if e, ok := err.(*ErrWithStatus); ok {
+				status = e.status
+				msg = http.StatusText(e.status)
+				if status == http.StatusBadRequest || status == http.StatusConflict {
+					msg = e.err.Error()
+				}
+			}
+			log := logger.FromContext(r.Context())
+			log.ErrorContext(r.Context(),
+				"error executing handler",
+				slog.Any("err", err),
+				slog.Int("status", status),
+				slog.String("msg", msg),
+			)
+			w.Header().Set("Content-Type", "application/json;charset=utf-8")
+			w.WriteHeader(status)
+			if err := json.NewEncoder(w).Encode(response.ApiResponse[struct{}]{
+				Message: msg,
+			}); err != nil {
+				log.ErrorContext(r.Context(), "error encoding response", slog.Any("err", err))
+			}
+		}
+	}
+}
+```
+
+## setup decode function response with generic
+
+```golang
+type Validator interface {
+	Validate(_validator *validator.Validate) error
+}
+
+// Decode - decode and vaildate input request body
+func Decode[T Validator](r *http.Request, _validator *validator.Validate) (T, error) {
+	var t T
+	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
+		return t, fmt.Errorf("decoding request body: %w", err)
+	}
+	if err := t.Validate(_validator); err != nil {
+		return t, err
+	}
+	return t, nil
+}
+```
+
+## setup encode function
+
+```golang
+// Encode - encode response body
+func Encode[T any](v T, status int, w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json;charset=utf-8")
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		return fmt.Errorf("encoding response: %w", err)
+	}
+	return nil
+}
+```

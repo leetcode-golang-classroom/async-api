@@ -1,0 +1,18 @@
+package user
+
+import (
+	"github.com/go-playground/validator/v10"
+)
+
+type SignUpRequest struct {
+	Email    string `json:"email" validate:"required"`
+	Password string `json:"password" validate:"required"`
+}
+
+func (r SignUpRequest) Validate(validator *validator.Validate) error {
+	err := validator.Struct(r)
+	if err != nil {
+		return err
+	}
+	return nil
+}

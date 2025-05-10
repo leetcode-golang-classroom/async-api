@@ -2,25 +2,40 @@ package application
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/config"
+	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/db"
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/logger"
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/util"
 )
 
 // App - for server dependency
 type App struct {
-	config *config.Config
-	router *http.ServeMux
+	config    *config.Config
+	router    *http.ServeMux
+	validator *validator.Validate
+	db        *sql.DB
 }
 
 func New(ctx context.Context, config *config.Config) *App {
+	db, err := db.Connect(config.DBURL)
+	log := logger.FromContext(ctx)
+	if err != nil {
+		log.ErrorContext(ctx, "failed to connect to db", slog.Any("err", err))
+		os.Exit(1)
+	}
 	app := &App{
-		config: config,
-		router: http.NewServeMux(),
+		config:    config,
+		router:    http.NewServeMux(),
+		validator: validator.New(validator.WithRequiredStructEnabled()),
+		db:        db,
 	}
 	app.SetupRoute(ctx)
 	return app
