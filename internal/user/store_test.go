@@ -1,4 +1,4 @@
-package store
+package user
 
 import (
 	"context"
@@ -24,7 +24,7 @@ func SetupDB(t *testing.T) (*sql.DB, *migrate.Migrate) {
 	db, err := db.Connect(dbURL)
 	require.NoError(t, err)
 
-	result := strings.Replace(appConfig.PROJECT_ROOT, "/internal/user/store", "", 1)
+	result := strings.Replace(appConfig.PROJECT_ROOT, "/internal/user", "", 1)
 	m, err := migrate.New(
 		fmt.Sprintf("file://%s/migrations", result),
 		dbURL,
