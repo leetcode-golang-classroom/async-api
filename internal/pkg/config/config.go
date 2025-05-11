@@ -14,11 +14,13 @@ const (
 )
 
 type Config struct {
-	Port         string `mapstructure:"PORT"`
-	DBURL        string `mapstructure:"DB_URL"`
-	DBURLTEST    string `mapstructure:"DB_URL_TEST"`
-	ENV          Env    `mapstructure:"ENV"`
-	PROJECT_ROOT string `mapstructure:"PROJECT_ROOT"`
+	Port          string `mapstructure:"PORT"`
+	DBURL         string `mapstructure:"DB_URL"`
+	DBURLTEST     string `mapstructure:"DB_URL_TEST"`
+	ENV           Env    `mapstructure:"ENV"`
+	PROJECT_ROOT  string `mapstructure:"PROJECT_ROOT"`
+	JWTSecret     string `mapstructure:"JWT_SECRET"`
+	JWTServerHost string `mapstructure:"JWT_SERVER_HOST"`
 }
 
 var AppConfig *Config
@@ -34,6 +36,8 @@ func init() {
 	FailOnError(v.BindEnv("DB_URL_TEST"), "failed to bind DB_URL_TEST")
 	FailOnError(v.BindEnv("ENV"), "failed to bind ENV")
 	FailOnError(v.BindEnv("PROJECT_ROOT"), "failed to bind PROJECT_ROOT")
+	FailOnError(v.BindEnv("JWT_SECRET"), "failed to bind JWT_SECRET")
+	FailOnError(v.BindEnv("JWT_SERVER_HOST"), "failed to bind JWT_SERVER_HOST")
 	err := v.ReadInConfig()
 	if err != nil {
 		log.Println("Load from environment variable")
