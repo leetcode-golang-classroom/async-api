@@ -48,7 +48,7 @@ func (jwtManager *JWTManager) Parse(token string) (*jwt.Token, error) {
 
 // GenerateTokenPair - generate accessToken, refreshToken
 func (jwtManager *JWTManager) GenerateTokenPair(userID uuid.UUID) (*TokenPair, error) {
-	now := time.Now()
+	now := time.Now().UTC()
 	issuer := fmt.Sprintf("http://%s:%s", jwtManager.config.JWTServerHost, jwtManager.config.Port)
 	jwtAccessToken := jwt.NewWithClaims(signingMethod,
 		CustomClaims{

@@ -1,4 +1,4 @@
-package user
+package user_test
 
 import (
 	"context"
@@ -13,6 +13,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/config"
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/db"
+	"github.com/leetcode-golang-classroom/golang-async-api/internal/user"
 	"github.com/stretchr/testify/require"
 )
 
@@ -39,7 +40,7 @@ func SetupDB(t *testing.T) (*sql.DB, *migrate.Migrate) {
 func TestUserStore(t *testing.T) {
 	db, m := SetupDB(t)
 	defer db.Close()
-	userStore := NewUserStore(db)
+	userStore := user.NewUserStore(db)
 	now := time.Now()
 	ctx := context.Background()
 	user1, err := userStore.CreateUser(ctx, "test@test.com", "testpassword")

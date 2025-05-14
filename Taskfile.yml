@@ -59,3 +59,15 @@ tasks:
     requires:
       vars: [action]
     ## action should be up or down
+  
+  test_db_migrate:
+    cmds:
+      - migrate -database $DB_URL_TEST -path migrations {{.action}}
+    silent: true
+    requires:
+      vars: [action]
+ 
+  test_db_login:
+    cmds:
+      - psql $DB_URL_TEST
+    silent: true

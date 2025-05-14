@@ -9,26 +9,32 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/helper"
+	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/jwt"
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/response"
 )
 
 type Handler struct {
-	logger    *slog.Logger
-	validator *validator.Validate
-	userStore *UserStore
+	logger     *slog.Logger
+	validator  *validator.Validate
+	userStore  *UserStore
+	jwtManager *jwt.JWTManager
 }
 
-func NewHandler(logger *slog.Logger, validator *validator.Validate, userStore *UserStore) *Handler {
+func NewHandler(logger *slog.Logger, validator *validator.Validate, userStore *UserStore,
+	jwtManager *jwt.JWTManager,
+) *Handler {
 	return &Handler{
-		logger:    logger,
-		validator: validator,
-		userStore: userStore,
+		logger:     logger,
+		validator:  validator,
+		userStore:  userStore,
+		jwtManager: jwtManager,
 	}
 }
 
 func (h *Handler) RegisterRoute(router *http.ServeMux) {
 	// setup route
 	router.HandleFunc("POST /auth/signup", h.signUpHandler())
+	router.HandleFunc("POST /auth/signIn", h.signInHandler())
 }
 
 func (h *Handler) signUpHandler() http.HandlerFunc {
@@ -67,6 +73,52 @@ func (h *Handler) signUpHandler() http.HandlerFunc {
 		if err := helper.Encode(response.ApiResponse[struct{}]{
 			Message: "successfully signed up user",
 		}, http.StatusCreated, w); err != nil {
+			return helper.NewErrWithStatus(
+				http.StatusInternalServerError,
+				err,
+			)
+		}
+		return nil
+	})
+}
+
+func (h *Handler) signInHandler() http.HandlerFunc {
+	return helper.Handler(func(w http.ResponseWriter, r *http.Request) error {
+		req, err := helper.Decode[SignInRequest](r, h.validator)
+		if err != nil {
+			return helper.NewErrWithStatus(
+				http.StatusBadRequest,
+				err,
+			)
+		}
+		defer r.Body.Close()
+		user, err := h.userStore.ByEmail(r.Context(), req.Email)
+		if err != nil {
+			return helper.NewErrWithStatus(
+				http.StatusInternalServerError,
+				err,
+			)
+		}
+		if err := user.ComparePassword(req.Password); err != nil {
+			return helper.NewErrWithStatus(
+				http.StatusUnauthorized,
+				err,
+			)
+		}
+		tokenPair, err := h.jwtManager.GenerateTokenPair(user.ID)
+		if err != nil {
+			return helper.NewErrWithStatus(
+				http.StatusInternalServerError,
+				err,
+			)
+		}
+		if err := helper.Encode(response.ApiResponse[SignInResponse]{
+			Data: &SignInResponse{
+				AccessToken:  tokenPair.AccessToken.Raw,
+				RefreshToken: tokenPair.RefreshToken.Raw,
+			},
+			Message: "successfully signup",
+		}, http.StatusOK, w); err != nil {
 			return helper.NewErrWithStatus(
 				http.StatusInternalServerError,
 				err,
