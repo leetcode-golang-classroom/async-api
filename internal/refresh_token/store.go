@@ -80,3 +80,36 @@ func (s *RefreshTokenStore) DeleteUserToken(ctx context.Context, userID uuid.UUI
 	}
 	return result, nil
 }
+
+func (s *RefreshTokenStore) ResetUserToken(ctx context.Context, userID uuid.UUID, token *jwt.Token) (*RefreshToken, error) {
+	base64TokenHash, err := s.getBase64HashFromToken(token)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get base64 encoded token hash: %w", err)
+	}
+	var refreshToken RefreshToken
+	expiresAt, err := token.Claims.GetExpirationTime()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get expiration time from token: %w", err)
+	}
+	tx, err := s.db.Beginx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+	if err != nil {
+		return nil, fmt.Errorf("failed to beginTx: %w", err)
+	}
+	const deleteRefreshTokenStmt = `DELETE FROM refresh_tokens WHERE user_id = $1;`
+	_, err = tx.ExecContext(ctx, deleteRefreshTokenStmt, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete refresh_tokens record: %w", err)
+	}
+	const createRefreshTokenStmt = `INSERT INTO refresh_tokens(user_id, hashed_token, expired_at) VALUES($1, $2, $3) RETURNING *;`
+	err = tx.GetContext(ctx, &refreshToken, createRefreshTokenStmt, userID, base64TokenHash, expiresAt.Time.UTC())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create refresh token record: %w", err)
+	}
+	tx.Commit()
+	return &refreshToken, nil
+}

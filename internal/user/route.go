@@ -11,23 +11,27 @@ import (
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/helper"
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/jwt"
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/response"
+	refreshtoken "github.com/leetcode-golang-classroom/golang-async-api/internal/refresh_token"
 )
 
 type Handler struct {
-	logger     *slog.Logger
-	validator  *validator.Validate
-	userStore  *UserStore
-	jwtManager *jwt.JWTManager
+	logger            *slog.Logger
+	validator         *validator.Validate
+	userStore         *UserStore
+	refreshTokenStore *refreshtoken.RefreshTokenStore
+	jwtManager        *jwt.JWTManager
 }
 
 func NewHandler(logger *slog.Logger, validator *validator.Validate, userStore *UserStore,
+	refreshTokenStore *refreshtoken.RefreshTokenStore,
 	jwtManager *jwt.JWTManager,
 ) *Handler {
 	return &Handler{
-		logger:     logger,
-		validator:  validator,
-		userStore:  userStore,
-		jwtManager: jwtManager,
+		logger:            logger,
+		validator:         validator,
+		userStore:         userStore,
+		refreshTokenStore: refreshTokenStore,
+		jwtManager:        jwtManager,
 	}
 }
 
@@ -112,12 +116,20 @@ func (h *Handler) signInHandler() http.HandlerFunc {
 				err,
 			)
 		}
+		// store refreshToken
+		_, err = h.refreshTokenStore.ResetUserToken(r.Context(), user.ID, tokenPair.RefreshToken)
+		if err != nil {
+			return helper.NewErrWithStatus(
+				http.StatusInternalServerError,
+				err,
+			)
+		}
+
 		if err := helper.Encode(response.ApiResponse[SignInResponse]{
 			Data: &SignInResponse{
 				AccessToken:  tokenPair.AccessToken.Raw,
 				RefreshToken: tokenPair.RefreshToken.Raw,
 			},
-			Message: "successfully signup",
 		}, http.StatusOK, w); err != nil {
 			return helper.NewErrWithStatus(
 				http.StatusInternalServerError,
