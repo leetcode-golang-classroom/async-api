@@ -71,3 +71,12 @@ func (s *RefreshTokenStore) ByPrimaryKey(ctx context.Context, userID uuid.UUID, 
 	}
 	return &refreshToken, nil
 }
+
+func (s *RefreshTokenStore) DeleteUserToken(ctx context.Context, userID uuid.UUID) (sql.Result, error) {
+	const prepareStmt = `DELETE FROM refresh_tokens WHERE user_id = $1;`
+	result, err := s.db.ExecContext(ctx, prepareStmt, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete refresh_tokens record: %w", err)
+	}
+	return result, nil
+}

@@ -66,6 +66,12 @@ func TestUserStore(t *testing.T) {
 	require.Equal(t, refreshTokenRecord.CreatedAt, refreshTokenRecord1.CreatedAt)
 	require.Equal(t, refreshTokenRecord.ExpiresAt, refreshTokenRecord1.ExpiresAt)
 
+	result, err := refreshTokenStore.DeleteUserToken(ctx, user1.ID)
+	require.NoError(t, err)
+	rowAffected, err := result.RowsAffected()
+	require.NoError(t, err)
+	require.Equal(t, int64(1), rowAffected)
+
 	if err := m.Down(); err != nil {
 		require.NoError(t, err)
 	}
