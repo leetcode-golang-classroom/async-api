@@ -17,6 +17,8 @@ func (app *App) SetupRoute(ctx context.Context) {
 	userStore := user.NewUserStore(app.db)
 	refreshTokenStore := refreshtoken.NewRefreshTokenStore(app.db)
 	jwtManager := jwt.NewJWTManager(app.config)
+	app.userStore = userStore
+	app.jwtManager = jwtManager
 	userHandler := user.NewHandler(slog, app.validator, userStore, refreshTokenStore, jwtManager)
 	userHandler.RegisterRoute(app.router)
 }

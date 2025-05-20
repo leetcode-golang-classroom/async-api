@@ -12,16 +12,20 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/config"
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/db"
+	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/jwt"
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/logger"
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/util"
+	"github.com/leetcode-golang-classroom/golang-async-api/internal/user"
 )
 
 // App - for server dependency
 type App struct {
-	config    *config.Config
-	router    *http.ServeMux
-	validator *validator.Validate
-	db        *sql.DB
+	config     *config.Config
+	router     *http.ServeMux
+	validator  *validator.Validate
+	db         *sql.DB
+	userStore  *user.UserStore
+	jwtManager *jwt.JWTManager
 }
 
 func New(ctx context.Context, config *config.Config) *App {
@@ -43,9 +47,10 @@ func New(ctx context.Context, config *config.Config) *App {
 
 func (app *App) Start(ctx context.Context) error {
 	middleware := NewLoggerMiddleware(ctx)
+	authMiddleware := NewAuthMiddleware(ctx, app.jwtManager, app.userStore)
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%s", app.config.Port),
-		Handler: middleware(app.router),
+		Handler: authMiddleware(middleware(app.router)),
 	}
 	log := logger.FromContext(ctx)
 	log.Info(fmt.Sprintf("starting server on %s", app.config.Port))
