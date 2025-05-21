@@ -31,6 +31,6 @@ func (r SignInRequest) Validate(validator *validator.Validate) error {
 }
 
 type SignInResponse struct {
-	AccessToken  string `access_token`
-	RefreshToken string `refresh_token`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }

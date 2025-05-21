@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/helper"
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/jwt"
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/response"
@@ -39,6 +41,7 @@ func (h *Handler) RegisterRoute(router *http.ServeMux) {
 	// setup route
 	router.HandleFunc("POST /auth/signup", h.signUpHandler())
 	router.HandleFunc("POST /auth/signIn", h.signInHandler())
+	router.HandleFunc("POST /auth/refresh", h.refreshHandler())
 }
 
 func (h *Handler) signUpHandler() http.HandlerFunc {
@@ -135,6 +138,59 @@ func (h *Handler) signInHandler() http.HandlerFunc {
 				http.StatusInternalServerError,
 				err,
 			)
+		}
+		return nil
+	})
+}
+
+func (h *Handler) refreshHandler() http.HandlerFunc {
+	return helper.Handler(func(w http.ResponseWriter, r *http.Request) error {
+		req, err := helper.Decode[TokenRefreshRequest](r, h.validator)
+		if err != nil {
+			return helper.NewErrWithStatus(http.StatusBadRequest, err)
+		}
+
+		currentRefreshToken, err := h.jwtManager.Parse(req.RefreshToken)
+		if err != nil {
+			return helper.NewErrWithStatus(http.StatusUnauthorized, err)
+		}
+
+		userIDstr, err := currentRefreshToken.Claims.GetSubject()
+		if err != nil {
+			return helper.NewErrWithStatus(http.StatusUnauthorized, err)
+		}
+
+		userID, err := uuid.Parse(userIDstr)
+		if err != nil {
+			return helper.NewErrWithStatus(http.StatusUnauthorized, err)
+		}
+
+		currentRefreshTokenRecord, err := h.refreshTokenStore.ByPrimaryKey(r.Context(), userID, currentRefreshToken)
+		if err != nil {
+			status := http.StatusInternalServerError
+			if errors.Is(err, sql.ErrNoRows) {
+				status = http.StatusUnauthorized
+			}
+			return helper.NewErrWithStatus(status, err)
+		}
+		if currentRefreshTokenRecord.ExpiresAt.Before(time.Now()) {
+			return helper.NewErrWithStatus(http.StatusUnauthorized, fmt.Errorf("refresh token expired"))
+		}
+
+		tokenPair, err := h.jwtManager.GenerateTokenPair(userID)
+		if err != nil {
+			return helper.NewErrWithStatus(http.StatusInternalServerError, err)
+		}
+		if _, err := h.refreshTokenStore.ResetUserToken(r.Context(), userID, tokenPair.RefreshToken); err != nil {
+			return helper.NewErrWithStatus(http.StatusInternalServerError, err)
+		}
+		if err := helper.Encode(response.ApiResponse[TokenRefreshResponse]{
+			Data: &TokenRefreshResponse{
+				AccessToken:  tokenPair.AccessToken.Raw,
+				RefreshToken: tokenPair.RefreshToken.Raw,
+			},
+		}, http.StatusOK, w); err != nil {
+			return helper.NewErrWithStatus(http.StatusInternalServerError, err)
 		}
 		return nil
 	})
