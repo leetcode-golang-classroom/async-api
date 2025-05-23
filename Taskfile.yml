@@ -10,13 +10,23 @@ tasks:
   
   build:
     cmds:
-      - CGO_ENABLED=0 GOOS=linux go build -o bin/main cmd/main.go
+      - CGO_ENABLED=0 GOOS=linux go build -o bin/apiserver cmd/apiserver/main.go
+    silent: true
+  build_awstest:
+    cmds:
+      - CGO_ENABLED=0 GOOS=linux go build -o bin/awstest cmd/awstest/main.go
     silent: true
   run:
     cmds:
-      - ./bin/main
+      - ./bin/apiserver
     deps:
       - build
+    silent: true
+  run_awstest:
+    cmds:
+      - ./bin/awstest
+    deps:
+      - build_awstest
     silent: true
 
   build-mage:
@@ -70,4 +80,29 @@ tasks:
   test_db_login:
     cmds:
       - psql $DB_URL_TEST
+    silent: true
+  
+  terraform_plan:
+    cmds:
+      - cd terraform;terraform plan
+    silent: true
+  
+  terraform_apply:
+    cmds:
+      - cd terraform;terraform apply -auto-approve
+    silent: true
+  
+  terraform_destroy:
+    cmds:
+      - cd terraform;terraform destroy -auto-approve
+    silent: true
+
+  check_list_queue:
+    cmds:
+      - aws --endpoint-url http://localhost:4566 sqs list-queues
+    silent: true
+
+  check_s3_bucket:
+    cmds:
+      - aws --endpoint-url http://localhost:4566 s3 ls
     silent: true

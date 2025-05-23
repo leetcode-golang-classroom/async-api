@@ -26,3 +26,7 @@ go.work.sum
 bin
 mage
 gg
+terraform/.terraform
+.terraform.*
+terraform/terraform.*
+volume
