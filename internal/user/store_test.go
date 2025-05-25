@@ -14,6 +14,7 @@ import (
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/config"
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/db"
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/user"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -45,23 +46,23 @@ func TestUserStore(t *testing.T) {
 	ctx := context.Background()
 	user1, err := userStore.CreateUser(ctx, "test@test.com", "testpassword")
 	require.NoError(t, err)
-	require.Equal(t, "test@test.com", user1.Email)
+	assert.Equal(t, "test@test.com", user1.Email)
 	require.NoError(t, user1.ComparePassword("testpassword"))
-	require.Less(t, now.UnixNano(), user1.CreatedAt.UnixNano())
+	assert.Less(t, now.UnixNano(), user1.CreatedAt.UnixNano())
 
 	user2, err := userStore.ByID(ctx, user1.ID)
 	require.NoError(t, err)
-	require.Equal(t, user1.Email, user2.Email)
-	require.Equal(t, user1.ID, user2.ID)
-	require.Equal(t, user1.HashedPasswordBase64, user2.HashedPasswordBase64)
-	require.Equal(t, user1.CreatedAt.UnixNano(), user2.CreatedAt.UnixNano())
+	assert.Equal(t, user1.Email, user2.Email)
+	assert.Equal(t, user1.ID, user2.ID)
+	assert.Equal(t, user1.HashedPasswordBase64, user2.HashedPasswordBase64)
+	assert.Equal(t, user1.CreatedAt.UnixNano(), user2.CreatedAt.UnixNano())
 
 	user2, err = userStore.ByEmail(ctx, user1.Email)
 	require.NoError(t, err)
-	require.Equal(t, user1.Email, user2.Email)
-	require.Equal(t, user1.ID, user2.ID)
-	require.Equal(t, user1.HashedPasswordBase64, user2.HashedPasswordBase64)
-	require.Equal(t, user1.CreatedAt.UnixNano(), user2.CreatedAt.UnixNano())
+	assert.Equal(t, user1.Email, user2.Email)
+	assert.Equal(t, user1.ID, user2.ID)
+	assert.Equal(t, user1.HashedPasswordBase64, user2.HashedPasswordBase64)
+	assert.Equal(t, user1.CreatedAt.UnixNano(), user2.CreatedAt.UnixNano())
 	if err := m.Down(); err != nil {
 		require.NoError(t, err)
 	}
