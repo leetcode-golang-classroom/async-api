@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/jwt"
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/logger"
+	"github.com/leetcode-golang-classroom/golang-async-api/internal/pkg/util"
 	"github.com/leetcode-golang-classroom/golang-async-api/internal/user"
 )
 
@@ -21,12 +22,6 @@ func NewLoggerMiddleware(ctx context.Context) func(next http.Handler) http.Handl
 			next.ServeHTTP(w, r)
 		})
 	}
-}
-
-type userCtxKey struct{}
-
-func ContextWithUserID(ctx context.Context, user *user.User) context.Context {
-	return context.WithValue(ctx, userCtxKey{}, user)
 }
 
 func NewAuthMiddleware(ctx context.Context, jwtManager *jwt.JWTManager, userStore *user.UserStore) func(next http.Handler) http.Handler {
@@ -81,7 +76,7 @@ func NewAuthMiddleware(ctx context.Context, jwtManager *jwt.JWTManager, userStor
 				return
 			}
 
-			next.ServeHTTP(w, r.WithContext(ContextWithUserID(r.Context(), user)))
+			next.ServeHTTP(w, r.WithContext(util.ContextWithUserID(r.Context(), user)))
 		})
 	}
 }

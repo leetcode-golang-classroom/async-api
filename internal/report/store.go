@@ -35,6 +35,23 @@ type Report struct {
 	FailedAt             sql.NullTime   `db:"failed_at"`
 }
 
+func (r *Report) IsDone() bool {
+	return r.FailedAt.Valid || r.CompletedAt.Valid
+}
+func (r *Report) Status() string {
+	switch {
+	case r.StartedAt.Valid == false:
+		return "requested"
+	case r.StartedAt.Valid == true && !r.IsDone():
+		return "processing"
+	case r.CompletedAt.Valid:
+		return "completed"
+	case r.FailedAt.Valid:
+		return "failed"
+	}
+	return "unknown"
+}
+
 func (s *ReportStore) Create(ctx context.Context, userID uuid.UUID, reportType string) (*Report, error) {
 	const prepareStmt = `INSERT INTO reports(user_id, report_type) VALUES ($1, $2) RETURNING *`
 	var report Report

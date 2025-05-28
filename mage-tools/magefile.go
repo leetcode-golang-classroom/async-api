@@ -25,13 +25,13 @@ func Build() error {
 	mg.Deps(Clean)
 	mg.Deps(Update)
 	// build the http server
-	return sh.Run("go", "build", "-o", "./bin/server", "./cmd/main.go")
+	return sh.Run("go", "build", "-o", "./bin/apiserver", "./cmd/apiserver/main.go")
 }
 
 // LaunchServer start the server
 func LaunchServer() error {
 	mg.Deps(Build)
-	return sh.RunV("./bin/server")
+	return sh.RunV("./bin/apiserver")
 }
 
 // run the test
