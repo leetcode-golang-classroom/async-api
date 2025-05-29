@@ -17,9 +17,9 @@ type LozClient struct {
 	httpClient HTTPClient
 }
 
-func NewClient(baseURL string, httpClient HTTPClient) *LozClient {
+func NewClient(httpClient HTTPClient) *LozClient {
 	return &LozClient{
-		baseURL:    baseURL,
+		baseURL:    BaseURL,
 		httpClient: httpClient,
 	}
 }

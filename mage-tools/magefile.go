@@ -28,10 +28,24 @@ func Build() error {
 	return sh.Run("go", "build", "-o", "./bin/apiserver", "./cmd/apiserver/main.go")
 }
 
+// buildWorker Create the binary worker
+func BuildWorker() error {
+	mg.Deps(Clean)
+	mg.Deps(Update)
+	// build the worker
+	return sh.Run("go", "build", "-o", "./bin/worker", "./cmd/worker/main.go")
+}
+
 // LaunchServer start the server
 func LaunchServer() error {
 	mg.Deps(Build)
 	return sh.RunV("./bin/apiserver")
+}
+
+// LaunchWorker start the worker
+func LaunchWorker() error {
+	mg.Deps(BuildWorker)
+	return sh.RunV("./bin/worker")
 }
 
 // run the test

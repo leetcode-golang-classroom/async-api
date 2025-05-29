@@ -223,36 +223,41 @@ func (h *Handler) getReportHandler() http.HandlerFunc {
 		if report.CompletedAt.Valid {
 			completedAt = &report.CompletedAt.Time
 		}
-		if report.CompletedAt.Valid && report.DownloadURLExpiresAt.Valid && report.DownloadURLExpiresAt.Time.Before(time.Now().UTC()) {
-			completedAt = &report.CompletedAt.Time
-			// to s3 client (presigned client)
-			expiresAt := time.Now().Add(10 * time.Second)
-			signedURL, err := h.preSignedClient.PresignGetObject(r.Context(), &s3.GetObjectInput{
-				Bucket: aws.String(h.appConfig.S3Bucket),
-				Key:    aws.String(report.OutputFilePath.String),
-			}, func(options *s3.PresignOptions) {
-				options.Expires = time.Second * 10
-			})
-			if err != nil {
-				return helper.NewErrWithStatus(
-					http.StatusInternalServerError,
-					err,
-				)
-			}
-			report.DownloadURL = sql.NullString{
-				String: signedURL.URL,
-				Valid:  true,
-			}
-			report.DownloadURLExpiresAt = sql.NullTime{
-				Time:  expiresAt,
-				Valid: true,
-			}
-			report, err = h.reportStore.Update(r.Context(), report)
-			if err != nil {
-				return helper.NewErrWithStatus(
-					http.StatusInternalServerError,
-					err,
-				)
+		if report.CompletedAt.Valid {
+			needRefresh := report.DownloadURLExpiresAt.Valid && report.DownloadURLExpiresAt.Time.Before(time.Now().UTC())
+			if !report.DownloadURL.Valid || needRefresh {
+				completedAt = &report.CompletedAt.Time
+				// to s3 client (presigned client)
+				expiresAt := time.Now().Add(10 * time.Second)
+				signedURL, err := h.preSignedClient.PresignGetObject(r.Context(), &s3.GetObjectInput{
+					Bucket: aws.String(h.appConfig.S3Bucket),
+					Key:    aws.String(report.OutputFilePath.String),
+				}, func(options *s3.PresignOptions) {
+					options.Expires = time.Second * 10
+				})
+				if err != nil {
+					return helper.NewErrWithStatus(
+						http.StatusInternalServerError,
+						err,
+					)
+				}
+				report.DownloadURL = sql.NullString{
+					String: signedURL.URL,
+					Valid:  true,
+				}
+				downloadURL = &signedURL.URL
+				report.DownloadURLExpiresAt = sql.NullTime{
+					Time:  expiresAt,
+					Valid: true,
+				}
+				downloadURLExpiresAt = &expiresAt
+				report, err = h.reportStore.Update(r.Context(), report)
+				if err != nil {
+					return helper.NewErrWithStatus(
+						http.StatusInternalServerError,
+						err,
+					)
+				}
 			}
 		}
 		var failedAt *time.Time
